@@ -364,9 +364,12 @@ def login():
                     'registration_code', ''
                 )
 
-                expected_code = os.environ.get(
-                    'MANAGER_REGISTRATION_CODE'
-                )
+                expected_code = (
+                    os.environ.get('MANAGER_REGISTRATION_CODE') or ''
+                    ).strip()
+                registration_code = (
+                request.form.get('registration_code') or ''
+                ).strip()
 
                 name = (request.form.get('name') or '').strip()
 
