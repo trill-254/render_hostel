@@ -29,7 +29,6 @@ app.config['SECRET_KEY'] = os.environ.get(
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Store SQLite database inside the Flask instance folder.
 os.makedirs(app.instance_path, exist_ok=True)
 
 DATABASE_PATH = os.path.join(app.instance_path, 'hostel.db')
@@ -38,7 +37,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
     'sqlite:///' + DATABASE_PATH
 )
 
-# Image upload configuration
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -171,7 +169,6 @@ def init_db():
         try:
             db.create_all()
 
-            # Create the initial manager account if none exists.
             if not User.query.filter_by(role='manager').first():
 
                 manager_email = os.environ.get(
@@ -205,10 +202,6 @@ def init_db():
             print(f'Database initialization error: {error}')
             raise
 
-
-# IMPORTANT:
-# This runs when Gunicorn imports app.py on Render.
-# Do not move it inside the __main__ block.
 
 init_db()
 
@@ -359,34 +352,9 @@ def login():
             # MANAGER REGISTRATION
             elif action == 'manager_register':
 
-                # Manager registration requires a secret code.
-                registration_code = request.form.get(
-                    'registration_code', ''
-                )
-
-                expected_code = (
-                    os.environ.get('MANAGER_REGISTRATION_CODE') or ''
-                    ).strip()
-                registration_code = (
-                request.form.get('registration_code') or ''
-                ).strip()
-
                 name = (request.form.get('name') or '').strip()
 
-                if not expected_code:
-                    flash(
-                        'Manager registration is disabled. '
-                        'Contact the system administrator.',
-                        'danger'
-                    )
-
-                elif registration_code != expected_code:
-                    flash(
-                        'Invalid manager registration code.',
-                        'danger'
-                    )
-
-                elif not name or not email or not password:
+                if not name or not email or not password:
                     flash(
                         'Please complete all registration fields.',
                         'danger'
@@ -459,7 +427,9 @@ def login():
 
         except SQLAlchemyError:
             db.session.rollback()
-            app.logger.exception('Database error during login or registration.')
+            app.logger.exception(
+                'Database error during login or registration.'
+            )
 
             flash(
                 'A database error occurred. Please try again.',
@@ -716,7 +686,10 @@ def update_booking_status(booking_id, action):
     room = db.session.get(Room, booking.room_id)
 
     if room is None:
-        flash('The room associated with this booking was not found.', 'danger')
+        flash(
+            'The room associated with this booking was not found.',
+            'danger'
+        )
         return redirect(url_for('manager_dashboard'))
 
     if action == 'confirm':
@@ -896,7 +869,10 @@ def edit_room(room_id):
 
     if existing_room and existing_room.id != room.id:
 
-        flash('Another room already uses that room number.', 'danger')
+        flash(
+            'Another room already uses that room number.',
+            'danger'
+        )
 
         return redirect(url_for('manager_dashboard'))
 
@@ -976,7 +952,6 @@ def delete_room(room_id):
 
     room = Room.query.get_or_404(room_id)
 
-    # Do not delete a room that has booking records.
     if Booking.query.filter_by(room_id=room.id).first():
 
         flash(
@@ -1108,7 +1083,10 @@ def profile():
 
         session.clear()
 
-        flash('Account not found. Please log in again.', 'warning')
+        flash(
+            'Account not found. Please log in again.',
+            'warning'
+        )
 
         return redirect(url_for('login'))
 
